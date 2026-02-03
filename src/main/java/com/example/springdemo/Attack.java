@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 public class Attack {
     public static void main(String[] args) throws InterruptedException {
         // 1. 准备 1000 个“抢购者” (模拟并发线程)
-        int peopleCount = 500;
+        int peopleCount = 100;
         ExecutorService threadPool = Executors.newFixedThreadPool(peopleCount);
 
         // 工具：RestTemplate 用来发 HTTP 请求
@@ -24,7 +24,7 @@ public class Attack {
             threadPool.execute(() -> {
                 // 模拟请求：http://localhost:8080/buy?stockId=1
                 // 这里的 URL 要和你 Controller 定义的一样
-                String url = "http://localhost:4000/buy?stockId=1";
+                String url = "http://localhost:4000/buy-redis?stockId=1";
 
                 try {
                     // 发送请求
