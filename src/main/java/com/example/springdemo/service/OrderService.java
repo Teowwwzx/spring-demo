@@ -3,6 +3,7 @@ package com.example.springdemo.service;
 import com.example.springdemo.model.Stock;
 import com.example.springdemo.repository.StockRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +18,9 @@ public class OrderService {
         stockRepository.save(new Stock(null, "Apple", 100));
     }
 
+    @Transactional
     public String buy(Long stockId){
-        Stock stock = stockRepository.findById(stockId).orElseThrow();
+        Stock stock = stockRepository.findByIdWithLock(stockId).orElseThrow();
 
         if (stock.getQuantity() > 0) {
             try { Thread.sleep(5); } catch (InterruptedException e) {}
