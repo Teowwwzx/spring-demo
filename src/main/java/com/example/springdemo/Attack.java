@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 public class Attack {
     public static void main(String[] args) throws InterruptedException {
         // 1. 准备 1000 个“抢购者” (模拟并发线程)
-        int peopleCount = 1000;
+        int peopleCount = 500;
         ExecutorService threadPool = Executors.newFixedThreadPool(peopleCount);
 
         // 工具：RestTemplate 用来发 HTTP 请求

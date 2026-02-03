@@ -3,8 +3,8 @@ package com.example.springdemo.service;
 import com.example.springdemo.model.Stock;
 import com.example.springdemo.repository.StockRepository;
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,24 +15,37 @@ public class OrderService {
 
     @PostConstruct
     public void initData() {
-        stockRepository.save(new Stock(null, "Apple", 100));
+        stockRepository.save(new Stock(null, "Apple", 100, null));
     }
 
-    @Transactional
-    public String buy(Long stockId){
-        Stock stock = stockRepository.findByIdWithLock(stockId).orElseThrow();
+    int count = 0;
+    public String buy(Long stockId) {
+        Stock stock = stockRepository.findById(stockId).orElseThrow();
 
         if (stock.getQuantity() > 0) {
-            try { Thread.sleep(5); } catch (InterruptedException e) {}
 
             stock.setQuantity(stock.getQuantity() - 1);
 
-            stockRepository.save(stock);
+            try {
+                Thread.sleep(5);
+                stockRepository.save(stock);
+                count++;
+                System.out.println("Person " + count + " bought an apple");
+                return "SUCCESS";
 
-            System.out.println( "Bought an apple");
-            return "SUCCESS";
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return "SYSTEM_ERROR";
+            } catch (ObjectOptimisticLockingFailureException e) {
+                // This is where the "1,000 people" conflict is caught
+                System.out.println("Conflict detected! Someone else bought it first.");
+                return "RETRY_OR_FAIL";
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
+                return "FAIL";
+            }
         } else {
-            System.out.println( "Out of stock");
+            System.out.println("Out of stock");
             return "FAIL";
         }
     }
