@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Global Arena</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Pixel Global Arena</h1>
+            <div id="user-panel">
+                <input type="text" id="username-input" placeholder="Enter username">
+                <button id="login-btn">Join Arena</button>
+            </div>
+            <div id="status-panel" class="hidden">
+                <span id="player-display"></span>
+                <span id="energy-display">⚡ Energy: --</span>
+                <span id="pixels-display">🎨 Painted: --</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="toolbar">
+                <div class="tool-group">
+                    <label>Color:</label>
+                    <input type="color" id="color-picker" value="#ff0000">
+                </div>
+                <div class="tool-group">
+                    <label>Tool:</label>
+                    <select id="tool-select">
+                        <option value="normalBrush">Brush (1⚡)</option>
+                        <option value="bomb">Bomb (10⚡)</option>
+                        <option value="paintBucket">Bucket (20⚡)</option>
+                    </select>
+                </div>
+                <div class="tool-group">
+                    <button id="refresh-btn">Refresh Canvas</button>
+                </div>
+                <div id="announcement" class="announcement"></div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="pixel-canvas" width="1000" height="1000"></canvas>
+            </div>
+        </main>
+
+        <div id="log-panel">
+            <div id="logs">Welcome to Pixel Arena! Enter a username to start painting.</div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
