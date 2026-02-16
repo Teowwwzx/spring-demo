@@ -18,9 +18,4 @@ public class Stock {
     private String name;
 
     private Integer quantity;
-
-    // ✨ 魔法字段：JPA 会自动维护它
-    // 每次更新，version 会自动 +1
-    @Version
-    private Integer version;
 }
