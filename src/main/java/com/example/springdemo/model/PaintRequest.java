@@ -19,6 +19,10 @@ public class PaintRequest {
     private String requestId; // Unique ID for idempotency
 
     private String username;
+    
+    private String tool; // normalBrush, bomb, etc.
+
+    @Column(name = "result", length = 512)
     private String result; // SUCCESS or FAIL
 
     @Column(name = "created_at")

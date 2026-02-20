@@ -75,7 +75,7 @@ public class PixelPaintService {
 
         if (!hasEnergy) {
             String result = "FAIL: 体力不足 (需要 " + energyCost + " 点体力)";
-            savePaintRequest(requestId, username, result);
+            savePaintRequest(requestId, username, toolType, result);
             return result;
         }
 
@@ -85,7 +85,7 @@ public class PixelPaintService {
 
             if (affectedPixels.isEmpty()) {
                 String result = "FAIL: 无效的坐标或无法绘制";
-                savePaintRequest(requestId, username, result);
+                savePaintRequest(requestId, username, toolType, result);
                 return result;
             }
 
@@ -103,14 +103,14 @@ public class PixelPaintService {
             broadcastUpdates(affectedPixels, color);
 
             String result = "SUCCESS: 使用 " + strategy.getToolName() + " 绘制了 " + pixelCount + " 个像素";
-            savePaintRequest(requestId, username, result);
+            savePaintRequest(requestId, username, toolType, result);
 
             System.out.println("✅ " + username + " " + result);
             return result;
 
         } catch (Exception e) {
             String result = "ERROR: " + e.getMessage();
-            savePaintRequest(requestId, username, result);
+            savePaintRequest(requestId, username, toolType, result);
             return result;
         }
     }
@@ -138,10 +138,11 @@ public class PixelPaintService {
     /**
      * 保存请求记录（幂等性）
      */
-    private void savePaintRequest(String requestId, String username, String result) {
+    private void savePaintRequest(String requestId, String username, String tool, String result) {
         PaintRequest paintRequest = new PaintRequest();
         paintRequest.setRequestId(requestId);
         paintRequest.setUsername(username);
+        paintRequest.setTool(tool);
         paintRequest.setResult(result);
         paintRequest.setCreatedAt(System.currentTimeMillis());
         paintRequestRepository.save(paintRequest);
