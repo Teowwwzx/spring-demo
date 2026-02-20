@@ -55,12 +55,21 @@ public class PixelController {
      */
     @PostMapping("/paint-batch")
     public String paintBatch(@RequestBody PaintBatchRequest request) {
+        if (request == null || request.getPixels() == null) {
+            return "ERROR: 像素列表不能为空";
+        }
+        
         try {
             UserContextHolder.setUser(request.getUsername());
             
             java.util.List<int[]> coords = request.getPixels().stream()
+                .filter(p -> p != null && p.getX() != null && p.getY() != null)
                 .map(p -> new int[]{p.getX(), p.getY()})
                 .collect(Collectors.toList());
+
+            if (coords.isEmpty()) {
+                return "ERROR: 无效的像素数据";
+            }
 
             return pixelPaintService.paintBatch(request.getUsername(), coords, request.getColor());
         } finally {
