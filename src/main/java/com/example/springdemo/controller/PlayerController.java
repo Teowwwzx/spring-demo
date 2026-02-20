@@ -53,4 +53,12 @@ public class PlayerController {
     public List<Achievement> getPlayerAchievements(@RequestParam String username) {
         return achievementService.getPlayerAchievements(username);
     }
+
+    /**
+     * 获取排行榜
+     */
+    @GetMapping("/ranking")
+    public List<Player> getRanking() {
+        return playerService.getTopPlayers();
+    }
 }

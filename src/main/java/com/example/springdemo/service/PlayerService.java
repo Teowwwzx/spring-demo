@@ -19,8 +19,8 @@ public class PlayerService {
     private GlobalEventManager globalEventManager;
 
     // 常量配置
-    private static final int MAX_ENERGY = 100;
-    private static final int ENERGY_REGEN_RATE = 1; // 每秒恢复1点体力
+    private static final int MAX_ENERGY = 1000;
+    private static final int ENERGY_REGEN_RATE = 100; // 每秒恢复1点体力
     private static final long ENERGY_REGEN_INTERVAL = 1000; // 1秒
 
     /**
@@ -93,11 +93,17 @@ public class PlayerService {
     }
 
     /**
-     * 自动恢复体力
+     * 获取积分排行榜
+     */
+    public java.util.List<Player> getTopPlayers() {
+        return playerRepository.findTop10ByPixelsPainted();
+    }
+
+    /**
+     * 自动恢复体力 (重构为原子操作)
      */
     private void regenerateEnergy(Player player) {
         if (player.getEnergy() >= player.getMaxEnergy()) {
-            player.setLastEnergyUpdate(System.currentTimeMillis());
             return;
         }
 
@@ -105,17 +111,12 @@ public class PlayerService {
         long timePassed = now - player.getLastEnergyUpdate();
         int energyToRecover = (int) (timePassed / ENERGY_REGEN_INTERVAL) * ENERGY_REGEN_RATE;
 
-        // 检查是否有双倍体力活动
         if (globalEventManager.isDoubleEnergyEvent()) {
             energyToRecover *= 2;
-            System.out.println("🎉 双倍体力恢复！");
         }
 
         if (energyToRecover > 0) {
-            int newEnergy = Math.min(player.getEnergy() + energyToRecover, player.getMaxEnergy());
-            player.setEnergy(newEnergy);
-            player.setLastEnergyUpdate(now);
-            playerRepository.save(player);
+            playerRepository.regenerateEnergyAtomically(player.getUsername(), energyToRecover, now);
         }
     }
 }

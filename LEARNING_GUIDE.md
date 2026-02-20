@@ -6,76 +6,69 @@ This document outlines the enterprise-grade architecture and design patterns imp
 
 ## 1. Core Architecture Overview (核心架构概览)
 The system follows a modern Spring Boot **Layered Architecture**, ensuring separation of concerns and scalability.
-系统采用现代 Spring Boot **分层架构**，确保代码职责分离及水平扩展能力。
 
-*   **`PixelController.java` / `CanvasController.java`**: REST endpoints for painting and canvas data.
-    *   REST 控制器，负责处理绘图请求与画布数据分发。
-*   **`PixelPaintService.java`**: The core "Orchestrator" for business logic.
-    *   核心“编排服务”，负责整合体力校验、绘图策略执行及缓存同步。
-*   **`PlayerRepository.java` / `PixelRepository.java`**: Data access layer with optimized queries.
-    *   数据访问层，包含针对高并发优化的自定义 SQL 查询。
-*   **`WebSocketConfig.java`**: The real-time communication hub.
-    *   实时通信配置中心，负责开启 STOMP 协议支持。
+*   **`PixelController.java`**: REST endpoints for single and **Batch** painting.
+*   **`PixelPaintService.java`**: The "Orchestrator" managing idempotency, energy, and caching.
+*   **`PlayerRepository.java`**: Data access with **Atomic SQL Updates** to prevent concurrency bugs.
+*   **`WebSocketConfig.java`**: Real-time STOMP hub for global state synchronization.
 
 ---
 
 ## 2. High-Concurrency & Reliability (高并发与金融级可靠性)
-We utilize several strategies to handle thousands of users painting simultaneously, meeting Fintech-grade requirements.
-针对万人同时涂色的场景，我们采用了金融科技（Fintech）级别的技术手段。
-
 *   **Atomic State Updates (原子化状态更新)**: 
-    *   *Implementation:* SQL `UPDATE ... SET energy = energy - :cost ... WHERE energy >= :cost`.
-    *   **[中文注释]**: 相比于在 Java 代码中加锁，SQL 原子更新直接在数据库层保证了扣减的原子性，彻底杜绝了体力被扣成负数的“超卖”现象。
-*   **Optimistic Locking (乐观锁)**:
-    *   *Implementation:* `@Version` annotation in entities.
-    *   **[中文注释]**: 假设冲突很少发生，通过版本号控制并发更新。如果两个用户同时修改同一个像素，后提交的会失败，从而保证数据一致性。
+    *   *Implementation:* `UPDATE Player p SET p.energy = p.energy - :cost WHERE p.energy >= :cost`.
+    *   **[中文]**: 放弃了传统的 `save()`，改用原生 SQL 原子更新。这在高并发环境下直接利用数据库行锁，彻底杜绝了 `StaleStateException` 和“超卖”现象。
 *   **Idempotency Handling (幂等性处理)**:
-    *   *Implementation:* Using `requestId` to track and deduplicate incoming requests.
-    *   **[中文注释]**: 确保由于网络抖动导致的重复请求不会被多次处理。对于扣费、扣体力等敏感操作，这是金融系统的“生命线”。
+    *   *Implementation:* `requestId` tracking in `PaintRequestRepository`.
+    *   **[中文]**: 确保支付或扣减类操作在网络重试时不会发生“二次扣费”，这是金融级系统的核心防线。
 
 ---
 
 ## 3. High-Performance Design (高性能设计)
-Optimized for low latency and high throughput.
-针对低延迟和高吞吐量进行了专门优化。
-
+*   **API Batching (接口批处理)**:
+    *   *Implementation:* `/api/pixel/paint-batch` endpoint.
+    *   **[中文]**: 将数百个像素点合并为一个请求发送。极大减少了网络 RTT（往返时间）和服务器 Context Switch（上下文切换）开销。
 *   **Redis Caching (分布式缓存)**:
-    *   *Implementation:* Live canvas data is stored in Redis for $O(1)$ lookup speed.
-    *   **[中文注释]**: 极大减轻了数据库的读取压力，确保前端获取画布区域数据时能实现毫秒级响应。
-*   **Asynchronous Execution (异步执行)**:
-    *   *Implementation:* Custom `ThreadPoolTaskExecutor` for non-blocking background tasks.
-    *   **[中文注释]**: 比如“成就检查”或“日志记录”可以异步处理，不阻塞用户的绘图主流程，提升系统吞吐量。
-*   **ThreadLocal Context (线程上下文持有者)**:
-    *   *Implementation:* `UserContextHolder.java` using `ThreadLocal<String>`.
-    *   **[中文注释]**: 使用 `ThreadLocal` 存储当前请求的用户 ID，避免了在 Service 层层传递参数。这是实现分布式追踪和统一鉴权的常用模式。
+    *   *Implementation:* Canvas data stored in Redis for $O(1)$ speed.
+*   **ThreadLocal Context**: Used in `UserContextHolder` to avoid parameter drilling.
 
 ---
 
-## 4. Real-Time Experience (实时交互体验)
-*   **WebSockets + STOMP (`WebSocketConfig.java`)**:
-    *   *Mechanism:* A persistent "Push" connection instead of "Pull" (polling).
-    *   **[中文注释]**: 只要有一个用户涂色，服务器会立即将像素变更通过 WebSocket 推送给所有在线玩家，实现真正的“全球同步”。
+## 4. Frontend Engineering & UX (前端工程化与用户体验)
+*   **p5.js Framework**:
+    *   *Why:* Used for professional graphics rendering and sub-pixel smoothing.
+    *   **[中文]**: 使用 p5.js 提供的 `line()` 和 `mouseDragged()` 实现了“丝滑”的绘图体验，替代了低效的原始 Canvas 事件监听。
+*   **Line Interpolation (线条插值)**:
+    *   *Algorithm:* **Bresenham's Algorithm**.
+    *   **[中文]**: 当用户快速移动鼠标时，前端自动计算并填充轨迹间的空隙，确保线条连续不“断点”。
+*   **Optimistic UI (乐观 UI)**:
+    *   *Mechanism:* Draw locally first, sync with server later.
+    *   **[中文]**: 提供“零延迟”的视觉反馈。在网络请求返回前就完成局部渲染，提升用户留存。
 
 ---
 
-## 5. Clean Code & Design Patterns (整洁代码与设计模式)
-*   **Strategy Pattern (策略模式) (`PaintStrategy.java`)**:
-    *   *Used for:* Different tools (Brush, Bomb, Bucket).
-    *   **[中文注释]**: 符合“开闭原则”。如果未来要增加新工具，只需新增一个策略类，无需修改原有的 Service 逻辑。
-*   **Factory Pattern (工厂模式) (`AchievementFactory.java`)**:
-    *   **[中文注释]**: 负责解耦复杂对象（如各类成就勋章）的创建过程，使代码结构更清晰。
-*   **Volatile Variables (`GlobalEventManager.java`)**:
-    *   **[中文注释]**: 保证全局开关（如“双倍体力活动”）在多线程环境下具有可见性，确保管理员开启活动后，所有服务器线程能立即可见。
+## 5. Mock Interview Questions (蚂蚁金服/Antom 模拟面试题)
+
+### Q1: Why did you use Batching for drawing? (为什么使用批量接口？)
+> **Answer:** "In high-frequency scenarios like drawing, single-pixel requests create massive overhead (TCP headers, HTTP parsing, DB transactions). Batching reduces N requests to 1, significantly lowering the pressure on the Thread Pool and Database IOPS."
+
+### Q2: How did you solve the 'StaleStateException' during high-speed drawing? (如何解决并发更新冲突？)
+> **Answer:** "I moved from Hibernate's optimistic locking (`@Version`) to **Native Atomic Updates**. By using `UPDATE SET energy = energy - 1 ... WHERE energy >= 1`, we push the conflict resolution down to the DB row-level lock, which is much more efficient than a 'fetch-modify-retry' cycle."
+
+### Q3: How do you handle consistency between Redis and the Database? (Redis 和数据库的一致性如何保证？)
+> **Answer:** "We use a **Write-Through** style where Redis is updated for real-time reads (WebSockets), while the Database remains the source of truth for energy and state. For production, I would use a **Canal** or **CDC (Change Data Capture)** approach to ensure Redis is always in sync with the DB binlog."
+
+### Q4: If 10,000 users paint the same pixel, how do you handle the 'Hot Key'? (万名玩家涂同一个点，如何处理热点 Key？)
+> **Answer:** "For extreme hot keys, I would implement **Local Caching (Caffeine)** on the Java side to aggregate updates for 100ms before hitting Redis, effectively 'merging' 10,000 writes into one."
 
 ---
 
 ## 6. Technology Stack Summary (技术栈总结)
 
-| Category | Technology | 中文释义 |
+| Category | Technology | Purpose |
 | :--- | :--- | :--- |
-| **Framework** | Spring Boot 3+ (Java 21) | 行业标准微服务框架 |
-| **Persistence** | Spring Data JPA + H2/PostgreSQL | 强一致性持久化存储 |
-| **Caching** | Redis (Distributed) | 应对高并发访问的利器 |
-| **Real-time** | Spring WebSocket (STOMP) | 实时双向推送协议 |
-| **Concurrency** | SQL Atomic, Optimistic Locking | 保证金融级数据正确性 |
-| **Frontend** | HTML5 Canvas + STOMP.js | 高性能画布渲染与实时监听 |
+| **Backend** | Spring Boot 3+ (Java 21) | Enterprise Microservice |
+| **Graphics** | p5.js | Smooth Canvas & UX |
+| **Real-time** | WebSocket (STOMP) | Live State Sync |
+| **Batching** | JSON List Objects | Network Optimization |
+| **Consistency** | Native SQL Atomic | High-Concurrency Safety |

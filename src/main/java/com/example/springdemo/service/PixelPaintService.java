@@ -116,6 +116,26 @@ public class PixelPaintService {
     }
 
     /**
+     * 批量绘制像素 (用于平滑画笔)
+     */
+    @Transactional
+    public String paintBatch(String username, List<int[]> coordinates, String color) {
+        if (username == null || username.isEmpty()) return "ERROR: 用户未登录";
+        
+        // 批量扣除体力 (1个点1点体力)
+        int totalCost = coordinates.size();
+        boolean hasEnergy = playerService.consumeEnergy(username, totalCost);
+        
+        if (!hasEnergy) return "FAIL: 体力不足 (需要 " + totalCost + " 点)";
+
+        // 批量更新
+        updateRedisCache(coordinates, color, username);
+        broadcastUpdates(coordinates, color);
+        
+        return "SUCCESS: 绘制了 " + totalCost + " 个像素";
+    }
+
+    /**
      * 保存请求记录（幂等性）
      */
     private void savePaintRequest(String requestId, String username, String result) {
@@ -147,24 +167,11 @@ public class PixelPaintService {
      */
     private void broadcastUpdates(List<int[]> pixels, String color) {
         for (int[] pixel : pixels) {
-            Map<String, Object> update = new MapBuilder()
-                .put("x", pixel[0])
-                .put("y", pixel[1])
-                .put("color", color)
-                .build();
-            messagingTemplate.convertAndSend("/topic/pixel-update", update, (java.util.Map<String, Object>) null);
-        }
-    }
-
-    // 内部简单的 Map 构建器，避免引入更多依赖
-    private static class MapBuilder {
-        private final Map<String, Object> map = new java.util.HashMap<>();
-        public MapBuilder put(String key, Object value) {
-            map.put(key, value);
-            return this;
-        }
-        public Map<String, Object> build() {
-            return map;
+            Map<String, Object> update = new java.util.HashMap<>();
+            update.put("x", pixel[0]);
+            update.put("y", pixel[1]);
+            update.put("color", color);
+            messagingTemplate.convertAndSend("/topic/pixel-update", (Object) update);
         }
     }
 }

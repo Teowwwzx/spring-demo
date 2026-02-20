@@ -22,5 +22,18 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
            "WHERE LOWER(p.username) = LOWER(:username) AND p.energy >= :cost")
     int consumeEnergyAtomically(String username, int cost);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE Player p SET p.energy = CASE WHEN (p.energy + :amount) > p.maxEnergy THEN p.maxEnergy ELSE (p.energy + :amount) END, " +
+           "p.lastEnergyUpdate = :now " +
+           "WHERE LOWER(p.username) = LOWER(:username)")
+    int regenerateEnergyAtomically(String username, int amount, long now);
+
     Optional<Player> findByUsernameIgnoreCase(String username);
+
+    /**
+     * Get top players sorted by pixels painted
+     */
+    @Query("SELECT p FROM Player p ORDER BY p.pixelsPainted DESC LIMIT 10")
+    java.util.List<Player> findTop10ByPixelsPainted();
 }

@@ -1,11 +1,13 @@
 package com.example.springdemo.controller;
 
 import com.example.springdemo.context.UserContextHolder;
+import com.example.springdemo.model.PaintBatchRequest;
 import com.example.springdemo.service.PixelPaintService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 像素绘画控制器
@@ -19,12 +21,12 @@ public class PixelController {
 
     /**
      * 绘制像素
-     * @param username 用户名（实际项目中应该从token或session获取）
+     * @param username 用户名
      * @param x X坐标
      * @param y Y坐标
-     * @param color 颜色（十六进制，如 #FF0000）
-     * @param tool 工具类型：normalBrush, bomb, paintBucket
-     * @param requestId 请求ID（可选，用于幂等性）
+     * @param color 颜色
+     * @param tool 工具类型
+     * @param requestId 请求ID
      */
     @PostMapping("/paint")
     public String paintPixel(
@@ -36,27 +38,38 @@ public class PixelController {
             @RequestParam(required = false) String requestId
     ) {
         try {
-            // 设置 ThreadLocal 用户上下文
             UserContextHolder.setUser(username);
 
-            // 如果没有提供 requestId，自动生成一个
             if (requestId == null || requestId.isEmpty()) {
                 requestId = UUID.randomUUID().toString();
             }
 
-            // 执行绘画
-            String result = pixelPaintService.paintPixel(requestId, x, y, color, tool);
-
-            return result;
-
+            return pixelPaintService.paintPixel(requestId, x, y, color, tool);
         } finally {
-            // 清除 ThreadLocal，防止内存泄漏
             UserContextHolder.clear();
         }
     }
 
     /**
-     * 快速测试接口（简化版）
+     * 批量绘制像素 (用于平滑画笔)
+     */
+    @PostMapping("/paint-batch")
+    public String paintBatch(@RequestBody PaintBatchRequest request) {
+        try {
+            UserContextHolder.setUser(request.getUsername());
+            
+            java.util.List<int[]> coords = request.getPixels().stream()
+                .map(p -> new int[]{p.getX(), p.getY()})
+                .collect(Collectors.toList());
+
+            return pixelPaintService.paintBatch(request.getUsername(), coords, request.getColor());
+        } finally {
+            UserContextHolder.clear();
+        }
+    }
+
+    /**
+     * 快速测试接口
      */
     @GetMapping("/paint-simple")
     public String paintSimple(

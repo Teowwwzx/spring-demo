@@ -61,6 +61,90 @@ button:hover { background: #444; }
 #login-btn { background: #4CAF50; border: none; }
 #login-btn:hover { background: #45a049; }
 
+.game-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.sidebar {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.canvas-area {
+    flex-grow: 1;
+}
+
+.panel {
+    background: #252525;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.panel h3 {
+    margin-top: 0;
+    color: #4CAF50;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.stats-panel p {
+    margin: 10px 0;
+    font-size: 0.9em;
+    color: #bbb;
+}
+
+.stats-panel span {
+    color: #4CAF50;
+    font-weight: bold;
+    float: right;
+}
+
+#ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#ranking-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+#ranking-list li:hover {
+    background-color: #2a2a2a;
+}
+
+.rank-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rank {
+    width: 24px;
+    text-align: center;
+    font-weight: bold;
+    color: #888;
+}
+
+#ranking-list li:nth-child(1) .username { color: #ffd700; } /* Gold */
+#ranking-list li:nth-child(2) .username { color: #c0c0c0; } /* Silver */
+#ranking-list li:nth-child(3) .username { color: #cd7f32; } /* Bronze */
+
+#ranking-list li:last-child { border-bottom: none; }
+#ranking-list .username { font-weight: bold; color: #fff; }
+#ranking-list .score { color: #4CAF50; font-weight: bold; }
+
 .canvas-container {
     background: #fff;
     border: 5px solid #333;
@@ -72,10 +156,10 @@ button:hover { background: #444; }
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-#pixel-canvas {
+canvas {
+    display: block;
     image-rendering: pixelated;
     cursor: crosshair;
-    display: block;
 }
 
 #log-panel {

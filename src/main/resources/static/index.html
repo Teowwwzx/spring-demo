@@ -11,6 +11,11 @@
         <header>
             <h1>🎮 Pixel Global Arena</h1>
             <div id="user-panel">
+                <select id="room-select">
+                    <option value="arena-1">Arena 1 (Main)</option>
+                    <option value="arena-2">Arena 2 (Pro)</option>
+                    <option value="arena-3">Arena 3 (Experimental)</option>
+                </select>
                 <input type="text" id="username-input" placeholder="Enter username">
                 <button id="login-btn">Join Arena</button>
             </div>
@@ -22,36 +27,65 @@
         </header>
 
         <main>
-            <div class="toolbar">
-                <div class="tool-group">
-                    <label>Color:</label>
-                    <input type="color" id="color-picker" value="#ff0000">
+            <div class="game-layout">
+                <div class="sidebar">
+                    <div class="panel ranking-panel">
+                        <h3>🏆 Top Players</h3>
+                        <ul id="ranking-list">
+                            <li>Loading...</li>
+                        </ul>
+                    </div>
+                    <div class="panel stats-panel">
+                        <h3>📊 Global Stats</h3>
+                        <div id="canvas-stats">
+                            <p>Pixels Painted: <span id="total-painted">--</span></p>
+                            <p>Arena Progress: <span id="progress-percent">--</span>%</p>
+                        </div>
+                    </div>
+                    <div class="panel info-panel">
+                        <h3>ℹ️ Room Info</h3>
+                        <p id="room-name">Global Arena</p>
+                    </div>
                 </div>
-                <div class="tool-group">
-                    <label>Tool:</label>
-                    <select id="tool-select">
-                        <option value="normalBrush">Brush (1⚡)</option>
-                        <option value="bomb">Bomb (10⚡)</option>
-                        <option value="paintBucket">Bucket (20⚡)</option>
-                    </select>
-                </div>
-                <div class="tool-group">
-                    <button id="refresh-btn">Refresh Canvas</button>
-                </div>
-                <div id="announcement" class="announcement"></div>
-            </div>
+                
+                <div class="canvas-area">
+                    <div class="toolbar">
+                        <div class="tool-group">
+                            <label>Color:</label>
+                            <input type="color" id="color-picker" value="#ff0000">
+                        </div>
+                        <div class="tool-group">
+                            <label>Tool:</label>
+                            <select id="tool-select">
+                                <option value="normalBrush">Brush (1⚡)</option>
+                                <option value="bomb">Bomb (10⚡)</option>
+                                <option value="paintBucket">Bucket (20⚡)</option>
+                            </select>
+                        </div>
+                        <div class="tool-group">
+                            <button id="refresh-btn">Refresh</button>
+                        </div>
+                        <div id="announcement" class="announcement"></div>
+                    </div>
 
-            <div class="canvas-container">
-                <canvas id="pixel-canvas" width="1000" height="1000"></canvas>
+                    <div id="p5-canvas-container" class="canvas-container">
+                        <!-- p5.js will inject the canvas here -->
+                    </div>
+                </div>
             </div>
         </main>
 
         <div id="log-panel">
-            <div id="logs">Welcome to Pixel Arena! Enter a username to start painting.</div>
+            <div id="logs">Welcome to Pixel Arena! Join to start painting.</div>
         </div>
     </div>
+
+    <!-- p5.js Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <!-- WebSockets -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <!-- Main App -->
     <script src="app.js"></script>
 </body>
 </html>

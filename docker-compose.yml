@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  app:
+    build: .
+    container_name: pixel-arena-app
+    ports:
+      - "4000:4000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379 # 容器内通信使用默认端口
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: pixel-arena-redis

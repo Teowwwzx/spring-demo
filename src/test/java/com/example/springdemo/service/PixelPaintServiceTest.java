@@ -41,6 +41,9 @@ class PixelPaintServiceTest {
     private StringRedisTemplate redisTemplate;
 
     @Mock
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
+    @Mock
     private ValueOperations<String, String> valueOperations;
 
     @Mock
